@@ -1,59 +1,87 @@
----
 version: 0.0.1
 discoveryPort:
-  name: Car prices barcelona CSV delimiter Test Multiple Entity 2
-  description: Test CSV file run
+  name: main branch
+  description: The data product provides average house rental rates in Madrid by house
+    type (Pisos, Aticos, Duplex, etc)
   category: customer
   image: http://google.com
   autofillUserinfo: true
-  tags: []
+  tags:
+    - Madrid
+    - House Rental
   extra: {}
 inputPorts:
-  - alias: car_input_port
+  - alias: usersS3_input_port
     description: string
     tags: []
     extra: {}
     syncType: pull
+    sourceUrn: urn:dv:datasource:8c1e2a8a-edcc-4933-afe7-072d7965e3fc
     type: s3
-    sourceUrn: urn:dv:datasource:a82aebc9-22e1-49fe-ab69-4a9deaddbb30
     entityId:
-      alias: car_prices
+      alias: usersS3
       createEntity: true
+      entityName: houses_Madrid.parquet
       type: s3-bucket
-      entityPath: "s3a://dp-input-bucket/user_car_prices_barcelona_2022/"
+      entityPath: s3a://dp-input-bucket/test/houses_Madrid.parquet
       entityFilterPatternMatch: "*"
       sourceSchemaUrn: urn:dv:schema:9d4716d4
       projectSchemaUrn: urn:dv:schema:9d4716d6
       fileFormat: parquet
       delimiter: "|"
-      header: true,
-      filter: brand = 'BMW'
+      filter: subtitle != ''
       processingTimeColumn:
         - processing_time
       actualTimeColumn:
         - processing_time
       projection:
-        - brand
-        - model
-        - engine
-        - year
-        - location
+        - id
+        - title
+        - subtitle
+        - sq_mt_built
+        - sq_mt_useful
+        - rent_price
+        - rent_price_by_area
+        - buy_price
+        - buy_price_by_area
 stateManagement:
-  alias: car_prices_barcelona
+  alias: users_count_by_gender
   refreshInterval: 00 10 * * *
-  logicalSchemaUrn: urn:dv:schema:263deedb-916b-40f2-9740-6ee02ce9b8b0
   retentionVersions: "10"
   updateStrategy: SCD-2
   productStoreState:
-    logicalSchemaUrn: urn:dv:schema:263deedb-916b-40f2-9740-6ee02ce9b8b0
+    #logicalSchemaUrn: urn:dv:schema:263deedb-916b-40f2-9740-6ee02ce9b8b9
+    logicalSchema:
+      type: object
+      properties:
+        name:
+          type: string
+        gender:
+          type: string
+          enum: [Male, Female]
+        age:
+          type: number
+        city:
+          type: string
+        zipcode:
+          type: number
+        some_prop:
+          type: string
+      required: [name, age, city]
     retentionVersions: "10"
   updateStrategyOptions:
-    - entityRef: ${urn:dv:datasource:6d4714c3}:1
-      uniqueKeyColumns:
-        - customer_id
-      changeTrackColumns:
-        - cust_title_desc
-        - cust_birthday
-        - cust_nationality
+    entityRef: ${urn:dv:datasource:6d4714c3}:1
+    uniqueKeyColumns:
+      - customer_id
+    changeTrackColumns:
+      - cust_title_desc
+      - cust_birthday
+      - cust_nationality
 transformation:
-  sql: select * from car_prices
+  sql: select * from usersS3
+outputPort:
+  channels:
+  - channelType: JDBC
+    queryType: SQL
+  - channelType: REST-API
+    queryType: SQL
