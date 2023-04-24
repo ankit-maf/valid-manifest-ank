@@ -1,7 +1,7 @@
 ---
 version: 0.0.1
 discoveryPort:
-  name: Demo 24/04/23
+  name: Multi Transfomration DP
   alias: Test0001_input_port
   ShortDescription: Weather Forecast of the next 7 days for ahmedabad city
   LongDescription: Weather Forecast of the next 7 days for ahmedabad city along with the accuracy of the previous forecast
@@ -40,152 +40,71 @@ discoveryPort:
   autofillUserinfo: true
   extra: {}
 inputPorts:
-  - alias: Test0001_input_port
+  - alias: car_input_port
     description: string
     tags: []
     extra: {}
     syncType: pull
     type: s3
-    sourceUrn: urn:dv:datasource:a4a616ae-5e59-4c8b-8223-a5f301fa2efa
+    sourceUrn: urn:dv:datasource:0ec70f7b-0691-4059-a0ee-e00a49c62542
     entityId:
-      alias: Test0001
+      alias: car_prices
       createEntity: true
-      entityName: test_scd2.csv
       type: s3-bucket
-      entityPath: s3://dp-input-bucket/mpay-tx/mpay-tx.csv
-      entityFilterPatternMatch: "*.csv"
+      entityPath: "s3a://dp-input-bucket/user_car_prices_barcelona_2022/"
+      entityFilterPatternMatch: "*"
       sourceSchemaUrn: urn:dv:schema:9d4716d4
       projectSchemaUrn: urn:dv:schema:9d4716d6
-      fileFormat: csv
+      fileFormat: parquet
       delimiter: ","
       header: true
-      filter: ""
+      filter: brand = 'BMW'
       processingTimeColumn:
-        - created_date
+        - processing_time
       actualTimeColumn:
-        - created_date
+        - processing_time
       projection:
-        - id
-        - name
-        - marks
-        - modified
+        - brand
+        - model
+        - engine
+        - year
+        - location
 stateManagement:
-  alias: Test0001_input_port
-  refreshInterval: 45 15 * * *
+  alias: car_prices_barcelona
+  refreshInterval: 00 10 * * *
   updateStrategy: append
   productStoreState:
     logicalSchema:
-      type: object
       properties:
-        id:
-          type: number
-          description: ID of the property
-        name:
-          type: String
-        marks:
-          type: number
-        modified:
-          type: datetime
-          description: To store the creation date
-      required:
-        - id
+        brand:
+          type: string
+        model:
+          type: string
+        engine:
+          type: string
+        year:
+          type: string
+        location:
+          type: string
   retentionVersions: "10"
-  updateStrategyOptions:
-    uniqueKeyColumns:
-      - id
-    changeTrackColumns:
-      - modified
 transformation:
-  sql: SELECT * FROM Test0001
+    - alias: "car_price_step_1"
+      description: "step_1"
+      type: "SQL"
+      query: "SELECT * FROM car_prices"
+      references:
+        - alias: 'car_prices'
+          sqlReference: 'car_prices'
+    - alias: "car_price_step_2"
+      description: "step_2"
+      query: "SELECT * FROM car_price_step_1"
+      type: "SQL"
+      references:
+        - alias: 'car_price_step_1'
+          sqlReference: 'car_price_step_1'
 outputPort:
   channels:
     - channelType: REST-API
       queryType: SQL
     - channelType: JDBC
       queryType: SQL
-dataQualityCheck:
-  RecordCountCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        expression: ">="
-        number: 100
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      expression: ==
-      number: 100
-  NullValueCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        checks:
-          - column: amount
-            expression: ">="
-            number: 9
-          - column: payment_option
-            expression: ">="
-            number: 8
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      checks:
-        - column: amount
-          expression: ">="
-          number: 0.9
-  NullCombinationCheck:
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      checks:
-        - columns:
-            - transaction_reference
-            - order_reference
-          expression: ">="
-          number: 0.99
-  UnacceptableTextValueCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        checks:
-          - column: payment_option
-            valueList:
-              - VISA
-              - MASTERCARD
-            number: 0.95
-            expression: ">="
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      checks:
-        - column: payment_option
-          valueList:
-            - MASTERCARD
-            - VISA
-          number: 0.9
-          expression: ">="
-  UniquenessCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        checks:
-          - column: store_group_name
-          - column: store_name
-  UniqueCombinationCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        checks:
-          - columns:
-              - store_name
-              - transaction_Reference
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      checks:
-        - columns:
-            - store_name
-            - transaction_Reference
-  DistinctValueCountCheck:
-    inputPort:
-      - referenceAlias: Test0001
-        checks:
-          - column: payment_option
-            number: 2
-            expression: "<="
-    stateManagement:
-      referenceAlias: Test0001_input_port
-      checks:
-        - column: payment_option
-          number: 2
-          expression: "<="
