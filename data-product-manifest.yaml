@@ -38,11 +38,11 @@ inputPorts:
     extra: {}
     syncType: pull
     type: s3
-    dataSetUrn: urn:dv:dataset:dd25da55-c4fc-42a4-bb55-df64ccf2a217
+    dataSetUrn: urn:dv:dataset:e48838a3-1e12-4938-8115-08b1d5349cd4
     entityId:
       alias: Test0001
       createEntity: true
-      entityName: test_scd2.csv
+      entityName: test_scd2.csv 
       type: s3-bucket
       entityPath: s3://dp-input-bucket/mpay-tx/mpay-tx.csv
       entityFilterPatternMatch: "*.csv"
