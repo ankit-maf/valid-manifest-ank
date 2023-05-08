@@ -1,7 +1,7 @@
 ---
 version: 0.0.1
 discoveryPort:
-  name: Test Discovery Port and DQ Rules 221a
+  name: Test1 Discovery Port and DQ Rules 221a
   alias: discover_dp
   shortDescription: New Discovery Port Fields and Search
   longDescription: Test data product to verify Discovery port fields and DQ rules. PII
